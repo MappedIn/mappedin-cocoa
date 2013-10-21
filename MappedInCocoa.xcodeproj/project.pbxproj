@@ -19,6 +19,7 @@
 		37AD388D1811C9440035B916 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 37AD38751811C9440035B916 /* UIKit.framework */; };
 		37AD38951811C9440035B916 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 37AD38931811C9440035B916 /* InfoPlist.strings */; };
 		37AD38971811C9440035B916 /* MappedInCocoaTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 37AD38961811C9440035B916 /* MappedInCocoaTests.m */; };
+		37AD38A31815913C0035B916 /* MIAPI.m in Sources */ = {isa = PBXBuildFile; fileRef = 37AD38A21815913C0035B916 /* MIAPI.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -48,6 +49,8 @@
 		37AD38921811C9440035B916 /* MappedInCocoaTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "MappedInCocoaTests-Info.plist"; sourceTree = "<group>"; };
 		37AD38941811C9440035B916 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		37AD38961811C9440035B916 /* MappedInCocoaTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MappedInCocoaTests.m; sourceTree = "<group>"; };
+		37AD38A11815913C0035B916 /* MIAPI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MIAPI.h; sourceTree = "<group>"; };
+		37AD38A21815913C0035B916 /* MIAPI.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MIAPI.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -107,6 +110,7 @@
 		37AD38771811C9440035B916 /* MappedInCocoa */ = {
 			isa = PBXGroup;
 			children = (
+				37AD38A01811D3130035B916 /* Classes */,
 				37AD38801811C9440035B916 /* MIAppDelegate.h */,
 				37AD38811811C9440035B916 /* MIAppDelegate.m */,
 				37AD38831811C9440035B916 /* Images.xcassets */,
@@ -142,6 +146,15 @@
 				37AD38931811C9440035B916 /* InfoPlist.strings */,
 			);
 			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		37AD38A01811D3130035B916 /* Classes */ = {
+			isa = PBXGroup;
+			children = (
+				37AD38A11815913C0035B916 /* MIAPI.h */,
+				37AD38A21815913C0035B916 /* MIAPI.m */,
+			);
+			path = Classes;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -240,6 +253,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				37AD38A31815913C0035B916 /* MIAPI.m in Sources */,
 				37AD38821811C9440035B916 /* MIAppDelegate.m in Sources */,
 				37AD387E1811C9440035B916 /* main.m in Sources */,
 			);
@@ -444,6 +458,7 @@
 				37AD389C1811C9440035B916 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		37AD389D1811C9440035B916 /* Build configuration list for PBXNativeTarget "MappedInCocoaTests" */ = {
 			isa = XCConfigurationList;
@@ -452,6 +467,7 @@
 				37AD389F1811C9440035B916 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
