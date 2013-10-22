@@ -12,7 +12,7 @@ Pod::Spec.new do |s|
 
   s.platform     = :ios, '6.0'
 
-  s.source       = { :git => "https://github.com/MappedIn/mappedin-cocoa.git", :commit => "88845601689389b262461b58dc90105f1cebc0e4" }
+  s.source       = { :git => "https://github.com/MappedIn/mappedin-cocoa.git", :tag => "v#{s.version}" }
 
   s.source_files = 'MappedInCocoa/Classes/**/*.{h,m}'
 
