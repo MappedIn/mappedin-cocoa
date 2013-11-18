@@ -10,8 +10,8 @@
 
 @class AFHTTPRequestOperationManager;
 
-typedef void (^MIAPIFailureCallback)(NSError *);
-typedef void (^MIAPISuccessCallback)(id);
+typedef void (^MIAPIFailureCallback)(NSError *error);
+typedef void (^MIAPISuccessCallback)(id result);
 
 typedef NS_ENUM(NSInteger, MIAPIErrorCode)
 {
