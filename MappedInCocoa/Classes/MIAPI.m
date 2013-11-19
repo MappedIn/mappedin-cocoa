@@ -143,6 +143,8 @@
           success:(MIAPISuccessCallback)success
           failure:(MIAPIFailureCallback)failure
 {
+  NSDate *timingDate = [NSDate date];
+  
   if (self.version.length)
   {
     path = [NSString stringWithFormat:@"/%@%@", self.version, path];
@@ -150,8 +152,17 @@
   
   NSString *url = [NSString stringWithFormat:@"%@:%@%@", self.host, self.port, path];
   
+  void(^logTime)(AFHTTPRequestOperation *) = ^(AFHTTPRequestOperation *operation)
+  {
+    if (!self.loggingEnabled)
+      return;
+    
+    NSLog(@"%@ (%d): %dms", url, operation.response.statusCode, (int)(1000 * [[NSDate date] timeIntervalSinceDate:timingDate]));
+  };
+  
   void (^requestSuccess)(AFHTTPRequestOperation *, id) = ^(AFHTTPRequestOperation *operation, id responseObject)
   {
+    logTime(operation);
     if ([responseObject isKindOfClass:[NSDictionary class]])
     {
       success(responseObject);
@@ -164,6 +175,7 @@
   
   void (^requestFailure)(AFHTTPRequestOperation *, NSError *) = ^(AFHTTPRequestOperation *operation, NSError *error)
   {
+    logTime(operation);
     failure(error);
   };
   
