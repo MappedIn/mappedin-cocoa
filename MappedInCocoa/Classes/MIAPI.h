@@ -26,7 +26,8 @@ typedef NS_ENUM(NSInteger, MIAPIErrorCode)
 
 - (id)initWithVersion:(NSString *)version;
 - (void)connectWithCallback:(void (^)(void))success failure:(MIAPIFailureCallback)failure;
-- (void)fetchMethod:(NSString *)name args:(NSDictionary *)args success:(MIAPISuccessCallback)success failure:(MIAPIFailureCallback)failure;
+- (NSString *)fetchMethod:(NSString *)name args:(NSDictionary *)args success:(MIAPISuccessCallback)success failure:(MIAPIFailureCallback)failure;
+- (void)cancelRequest:(NSString *)requestID;
 
 @property (nonatomic) BOOL loggingEnabled;
 

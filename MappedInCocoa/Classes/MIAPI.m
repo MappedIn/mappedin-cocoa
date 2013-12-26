@@ -14,6 +14,7 @@
 {
   AFHTTPRequestOperationManager *_requestManager;
   NSMutableDictionary *_methodManifest;
+  NSMutableDictionary *_requestOperations;
   BOOL _initializing, _ready;
 }
 
@@ -29,6 +30,7 @@
   
   _requestManager = [AFHTTPRequestOperationManager manager];
   _methodManifest = [NSMutableDictionary dictionary];
+  _requestOperations = [NSMutableDictionary dictionary];
   
   self.host = @"https://api.mappedin.com";
   self.index = @"/manifest";
@@ -137,11 +139,11 @@
           failure:failure];
 }
 
-- (void)fetchPath:(NSString *)path
-        arguments:(NSDictionary *)args
-           method:(NSString *)method
-          success:(MIAPISuccessCallback)success
-          failure:(MIAPIFailureCallback)failure
+- (NSString *)fetchPath:(NSString *)path
+              arguments:(NSDictionary *)args
+                 method:(NSString *)method
+                success:(MIAPISuccessCallback)success
+                failure:(MIAPIFailureCallback)failure
 {
   NSDate *timingDate = [NSDate date];
   
@@ -150,6 +152,7 @@
     path = [NSString stringWithFormat:@"/%@%@", self.version, path];
   }
   
+  NSString *uuid = [[NSUUID UUID] UUIDString];
   NSString *url = [NSString stringWithFormat:@"%@:%@%@", self.host, self.port, path];
   
   void(^logTime)(AFHTTPRequestOperation *) = ^(AFHTTPRequestOperation *operation)
@@ -160,9 +163,15 @@
     NSLog(@"%@ (%ld): %dms", url, (long)operation.response.statusCode, (int)(1000 * [[NSDate date] timeIntervalSinceDate:timingDate]));
   };
   
+  void(^removeRequest)() = ^
+  {
+    [_requestOperations removeObjectForKey:uuid];
+  };
+  
   void (^requestSuccess)(AFHTTPRequestOperation *, id) = ^(AFHTTPRequestOperation *operation, id responseObject)
   {
     logTime(operation);
+    removeRequest();
     if ([responseObject isKindOfClass:[NSDictionary class]])
     {
       success(responseObject);
@@ -176,29 +185,40 @@
   void (^requestFailure)(AFHTTPRequestOperation *, NSError *) = ^(AFHTTPRequestOperation *operation, NSError *error)
   {
     logTime(operation);
+    removeRequest();
     failure(error);
   };
   
+  AFHTTPRequestOperation *request;
+  
   if ([method isEqualToString:@"GET"])
   {
-    [_requestManager GET:url parameters:args success:requestSuccess failure:requestFailure];
+    request = [_requestManager GET:url parameters:args success:requestSuccess failure:requestFailure];
   }
   else if ([method isEqualToString:@"POST"])
   {
-    [_requestManager POST:url parameters:args success:requestSuccess failure:requestFailure];
+    request = [_requestManager POST:url parameters:args success:requestSuccess failure:requestFailure];
   }
+  
+  if (!request)
+  {
+    return nil;
+  }
+  
+  _requestOperations[uuid] = request;
+  return uuid;
 }
 
-- (void)fetchMethod:(NSString *)name
-               args:(NSDictionary *)args
-            success:(MIAPISuccessCallback)success
-            failure:(MIAPIFailureCallback)failure
+- (NSString *)fetchMethod:(NSString *)name
+                     args:(NSDictionary *)args
+                  success:(MIAPISuccessCallback)success
+                  failure:(MIAPIFailureCallback)failure
 {
   MIMethod *method = _methodManifest[name];
   if (!method)
   {
     failure([self errorForCode:MIAPIErrorMethodName userInfo:@{@"MIAPIErrorName": name}]);
-    return;
+    return nil;
   }
   
   MIAPISuccessCallback fetchSuccess = ^(id data)
@@ -222,7 +242,14 @@
     }
   };
   
-  [self fetchPath:method.path arguments:[method requestArgumentsForData:args] method:method.method success:fetchSuccess failure:failure];
+  return [self fetchPath:method.path arguments:[method requestArgumentsForData:args] method:method.method success:fetchSuccess failure:failure];
+}
+
+- (void)cancelRequest:(NSString *)requestID
+{
+  AFHTTPRequestOperation *request = _requestOperations[requestID];
+  [request cancel];
+  [_requestOperations removeObjectForKey:requestID];
 }
 
 @end
