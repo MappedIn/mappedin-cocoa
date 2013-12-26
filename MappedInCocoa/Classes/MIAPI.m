@@ -157,7 +157,7 @@
     if (!self.loggingEnabled)
       return;
     
-    NSLog(@"%@ (%d): %dms", url, operation.response.statusCode, (int)(1000 * [[NSDate date] timeIntervalSinceDate:timingDate]));
+    NSLog(@"%@ (%ld): %dms", url, (long)operation.response.statusCode, (int)(1000 * [[NSDate date] timeIntervalSinceDate:timingDate]));
   };
   
   void (^requestSuccess)(AFHTTPRequestOperation *, id) = ^(AFHTTPRequestOperation *operation, id responseObject)
