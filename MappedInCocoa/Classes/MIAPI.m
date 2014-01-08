@@ -247,6 +247,9 @@
 
 - (void)cancelRequest:(NSString *)requestID
 {
+  if (!requestID)
+    return;
+  
   AFHTTPRequestOperation *request = _requestOperations[requestID];
   [request cancel];
   [_requestOperations removeObjectForKey:requestID];
