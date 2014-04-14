@@ -446,6 +446,7 @@
 		};
 		37AD389E1811C9440035B916 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A4AE5FB4D55148C29CE16BA4 /* Pods.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/MappedInCocoa.app/MappedInCocoa";
 				FRAMEWORK_SEARCH_PATHS = (
