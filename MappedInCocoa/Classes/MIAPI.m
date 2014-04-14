@@ -102,14 +102,15 @@
 {
   if (_ready)
   {
-    success();
+    if (success)
+      success();
     return;
   }
   
   if (_initializing)
   {
-    NSError *error = [self errorForCode:MIAPIErrorAlreadyInitializing];
-    failure(error);
+    if (failure)
+      failure([self errorForCode:MIAPIErrorAlreadyInitializing]);
     return;
   }
   
@@ -124,16 +125,19 @@
               if ([self parseManifest:data[@"result"]])
               {
                 _ready = YES;
-                success();
+                if (success)
+                  success();
               }
               else
               {
-                failure([self errorForCode:MIAPIErrorMalformedResponse]);
+                if (failure)
+                  failure([self errorForCode:MIAPIErrorMalformedResponse]);
               }
             }
             else
             {
-              failure([self errorForCode:MIAPIErrorManifest]);
+              if (failure)
+                failure([self errorForCode:MIAPIErrorManifest]);
             }
           }
           failure:failure];
@@ -174,11 +178,13 @@
     removeRequest();
     if ([responseObject isKindOfClass:[NSDictionary class]])
     {
-      success(responseObject);
+      if (success)
+        success(responseObject);
     }
     else
     {
-      failure([self errorForCode:MIAPIErrorMalformedResponse]);
+      if (failure)
+        failure([self errorForCode:MIAPIErrorMalformedResponse]);
     }
   };
   
@@ -225,20 +231,25 @@
   {
     if (![data[@"success"] boolValue])
     {
-      NSString *errorMessage;
-      if (!(errorMessage = data[@"message"]))
+      if (failure)
       {
-        errorMessage = @"Something went wrong.";
+        NSString *errorMessage;
+        if (!(errorMessage = data[@"message"]))
+        {
+          errorMessage = @"Something went wrong.";
+        }
+        failure([NSError errorWithDomain:[self errorDomain] code:MIAPIErrorInternal userInfo:@{NSLocalizedDescriptionKey: errorMessage}]);
       }
-      failure([NSError errorWithDomain:[self errorDomain] code:MIAPIErrorInternal userInfo:@{NSLocalizedDescriptionKey: errorMessage}]);
     }
     else if (!data[@"result"])
     {
-      failure([self errorForCode:MIAPIErrorMalformedResponse]);
+      if (failure)
+        failure([self errorForCode:MIAPIErrorMalformedResponse]);
     }
     else
     {
-      success(data[@"result"]);
+      if (success)
+        success(data[@"result"]);
     }
   };
   
