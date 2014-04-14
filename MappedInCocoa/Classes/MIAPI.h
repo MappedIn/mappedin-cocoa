@@ -30,5 +30,6 @@ typedef NS_ENUM(NSInteger, MIAPIErrorCode)
 - (void)cancelRequest:(NSString *)requestID;
 
 @property (nonatomic) BOOL loggingEnabled;
+@property (nonatomic, readonly) BOOL ready;
 
 @end

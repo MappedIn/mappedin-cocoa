@@ -15,9 +15,10 @@
   AFHTTPRequestOperationManager *_requestManager;
   NSMutableDictionary *_methodManifest;
   NSMutableDictionary *_requestOperations;
-  BOOL _initializing, _ready;
+  BOOL _initializing;
 }
 
+@property (nonatomic) BOOL ready;
 @property (nonatomic, strong) NSString *host, *index, *port, *version, *identifier;
 
 @end
@@ -102,7 +103,7 @@
 
 - (void)connectWithCallback:(void (^)(void))success failure:(MIAPIFailureCallback)failure
 {
-  if (_ready)
+  if (self.ready)
   {
     if (success)
       success();
@@ -126,7 +127,7 @@
             {
               if ([self parseManifest:data[@"result"]])
               {
-                _ready = YES;
+                self.ready = YES;
                 if (success)
                   success();
               }

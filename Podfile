@@ -1,1 +1,2 @@
 podspec
+pod 'Block-KVO'
