@@ -74,7 +74,9 @@
   }
   
   NSMutableDictionary *userInfo = info ? [NSMutableDictionary dictionaryWithDictionary:info] : [NSMutableDictionary dictionary];
-  [userInfo setObject:NSLocalizedString(description, nil) forKey:NSLocalizedDescriptionKey];
+  
+  if (!userInfo[NSLocalizedDescriptionKey])
+    [userInfo setObject:NSLocalizedString(description, nil) forKey:NSLocalizedDescriptionKey];
   
   return [NSError errorWithDomain:[self errorDomain] code:code userInfo:userInfo];
 }
