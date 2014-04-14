@@ -145,8 +145,7 @@
     NSDictionary *manifest = [NSKeyedUnarchiver unarchiveObjectWithData:manifestData];
     
     [_methodManifest addEntriesFromDictionary:manifest];
-    _accessTokenExpiry = expiry;
-    _accessToken = token;
+    [self setAccessToken:token expiry:expiry];
     
     return YES;
   }
@@ -259,9 +258,7 @@
                       
                       if ([expiryDate timeIntervalSinceNow] > 0)
                       {
-                        _accessToken = token;
-                        _accessTokenExpiry = expiryDate;
-                        [_requestManager.requestSerializer setValue:[NSString stringWithFormat:@"Bearer %@", _accessToken] forHTTPHeaderField:@"Authorization"];
+                        [self setAccessToken:token expiry:expiryDate];
                       }
                     }
                     
@@ -284,6 +281,13 @@
                   if (failure)
                     failure([self errorForCode:code]);
                 }];
+}
+
+- (void)setAccessToken:(NSString *)token expiry:(NSDate *)expiryDate
+{
+  _accessToken = token;
+  _accessTokenExpiry = expiryDate;
+  [_requestManager.requestSerializer setValue:[NSString stringWithFormat:@"Bearer %@", _accessToken] forHTTPHeaderField:@"Authorization"];
 }
 
 #pragma mark - API fetching
