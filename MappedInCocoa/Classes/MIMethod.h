@@ -8,7 +8,7 @@
 
 #import <Foundation/Foundation.h>
 
-@interface MIMethod : NSObject
+@interface MIMethod : NSObject <NSCoding>
 
 @property (nonatomic, strong, readonly) NSString *name, *path, *method;
 @property (nonatomic, strong, readonly) NSArray *arguments;

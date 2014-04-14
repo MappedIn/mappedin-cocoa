@@ -22,6 +22,26 @@
   return self;
 }
 
+- (id)initWithCoder:(NSCoder *)decoder
+{
+  self = [super init];
+  
+  _name = [decoder decodeObjectForKey:@"name"];
+  _path = [decoder decodeObjectForKey:@"path"];
+  _method = [decoder decodeObjectForKey:@"method"];
+  _arguments = [decoder decodeObjectForKey:@"arguments"];
+  
+  return self;
+}
+
+- (void)encodeWithCoder:(NSCoder *)coder
+{
+  [coder encodeObject:_name forKey:@"name"];
+  [coder encodeObject:_path forKey:@"path"];
+  [coder encodeObject:_method forKey:@"method"];
+  [coder encodeObject:_arguments forKey:@"arguments"];
+}
+
 - (NSString *)description
 {
   return [NSString stringWithFormat:@"%@: %@ (%@)", self.name, self.path, self.method];
