@@ -12,6 +12,8 @@
 #import "MIAPI.h"
 
 #define kAPIVersion @"0"
+#define kAPIClientKey nil
+#define kAPISecretKey nil
 
 @interface MappedInCocoaTests : XCTestCase
 
@@ -31,7 +33,7 @@
 
 - (void)testReadyStates
 {
-  MIAPI *api = [[MIAPI alloc] initWithVersion:kAPIVersion];
+  MIAPI *api = [[MIAPI alloc] initWithVersion:kAPIVersion clientKey:kAPIClientKey secretKey:kAPISecretKey];
   
   XCTAssertFalse(api.ready, @"should not be ready immediately after initialization");
   
