@@ -19,12 +19,17 @@ typedef NS_ENUM(NSInteger, MIAPIErrorCode)
   MIAPIErrorMalformedResponse,
   MIAPIErrorManifest,
   MIAPIErrorMethodName,
-  MIAPIErrorInternal
+  MIAPIErrorInternal,
+  MIAPIErrorUnauthorized,
+  MIAPIErrorForbidden
 };
 
 @interface MIAPI : NSObject
 
++ (void)clearCachedAccessTokenAndManifest;
+
 - (id)initWithVersion:(NSString *)version;
+- (id)initWithVersion:(NSString *)version clientKey:(NSString *)clientKey secretKey:(NSString *)secretKey;
 - (void)connectWithCallback:(void (^)(void))success failure:(MIAPIFailureCallback)failure;
 - (NSString *)fetchMethod:(NSString *)name args:(NSDictionary *)args success:(MIAPISuccessCallback)success failure:(MIAPIFailureCallback)failure;
 - (void)cancelRequest:(NSString *)requestID;

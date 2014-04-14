@@ -10,22 +10,37 @@
 #import "MIMethod.h"
 #import <AFHTTPRequestOperationManager.h>
 
+#define MSEC_PER_SEC 1000.0
+
+#define StoredManifestKey @"MappedInCocoaManifest"
+#define StoredAccessTokenKey @"MappedInCocoaAccessToken"
+#define StoredTokenExpiryKey @"MappedInCocoaTokenExpiry"
+
 @interface MIAPI ()
 {
   AFHTTPRequestOperationManager *_requestManager;
   NSMutableDictionary *_methodManifest;
   NSMutableDictionary *_requestOperations;
   BOOL _initializing;
+  
+  NSString *_accessToken;
+  NSDate *_accessTokenExpiry;
 }
 
 @property (nonatomic) BOOL ready;
 @property (nonatomic, strong) NSString *host, *index, *port, *version, *identifier;
+@property (nonatomic, strong) NSString *clientKey, *secretKey;
 
 @end
 
 @implementation MIAPI
 
 - (id)initWithVersion:(NSString *)version
+{
+  return [self initWithVersion:version clientKey:nil secretKey:nil];
+}
+
+- (id)initWithVersion:(NSString *)version clientKey:(NSString *)clientKey secretKey:(NSString *)secretKey
 {
   self = [super init];
   
@@ -39,8 +54,13 @@
   self.version = version;
   self.identifier = [[[UIDevice currentDevice] identifierForVendor] UUIDString];
   
+  self.clientKey = clientKey;
+  self.secretKey = secretKey;
+  
   return self;
 }
+
+#pragma mark - Errors
 
 - (NSString *)errorDomain
 {
@@ -73,6 +93,14 @@
   {
     description = @"API does not include specified method.";
   }
+  else if (code == MIAPIErrorUnauthorized)
+  {
+    description = @"Missing or invalid credentials.";
+  }
+  else if (code == MIAPIErrorForbidden)
+  {
+    description = @"Not authorized to access method.";
+  }
   
   NSMutableDictionary *userInfo = info ? [NSMutableDictionary dictionaryWithDictionary:info] : [NSMutableDictionary dictionary];
   
@@ -82,12 +110,60 @@
   return [NSError errorWithDomain:[self errorDomain] code:code userInfo:userInfo];
 }
 
+#pragma mark - Caching
+
++ (void)clearCachedAccessTokenAndManifest
+{
+  NSUserDefaults *prefs = [NSUserDefaults standardUserDefaults];
+  
+  [prefs removeObjectForKey:StoredManifestKey];
+  [prefs removeObjectForKey:StoredAccessTokenKey];
+  [prefs removeObjectForKey:StoredTokenExpiryKey];
+}
+
+- (void)storeAccessTokenAndManifest
+{
+  if (_accessToken)
+  {
+    NSUserDefaults *prefs = [NSUserDefaults standardUserDefaults];
+    NSData *encodedManifest = [NSKeyedArchiver archivedDataWithRootObject:_methodManifest];
+    [prefs setObject:encodedManifest forKey:StoredManifestKey];
+    [prefs setObject:_accessToken forKey:StoredAccessTokenKey];
+    [prefs setObject:_accessTokenExpiry forKey:StoredTokenExpiryKey];
+  }
+}
+
+- (BOOL)retrieveAccessTokenAndManifest
+{
+  NSUserDefaults *prefs = [NSUserDefaults standardUserDefaults];
+  NSString *token = [prefs objectForKey:StoredAccessTokenKey];
+  NSDate *expiry = [prefs objectForKey:StoredTokenExpiryKey];
+  NSData *manifestData = [prefs objectForKey:StoredManifestKey];
+  
+  if (manifestData && token && [expiry timeIntervalSinceNow] > 300)
+  {
+    NSDictionary *manifest = [NSKeyedUnarchiver unarchiveObjectWithData:manifestData];
+    
+    [_methodManifest addEntriesFromDictionary:manifest];
+    _accessTokenExpiry = expiry;
+    _accessToken = token;
+    
+    return YES;
+  }
+  
+  return NO;
+}
+
+#pragma mark - Parsing
+
 - (BOOL)parseManifest:(NSArray *)manifest
 {
-  if (!manifest)
+  if (![manifest isKindOfClass:[NSArray class]])
   {
     return NO;
   }
+  
+  [_methodManifest removeAllObjects];
   
   for (NSDictionary *methodInfo in manifest)
   {
@@ -101,10 +177,13 @@
   return YES;
 }
 
+#pragma mark - Connecting
+
 - (void)connectWithCallback:(void (^)(void))success failure:(MIAPIFailureCallback)failure
 {
-  if (self.ready)
+  if (self.ready || [self retrieveAccessTokenAndManifest])
   {
+    self.ready = YES;
     if (success)
       success();
     return;
@@ -119,6 +198,14 @@
   
   _initializing = YES;
   
+  if (self.clientKey && self.secretKey)
+    [self getAccessToken:success failure:failure];
+  else
+    [self getManifest:success failure:failure];
+}
+
+- (void)getManifest:(void (^)(void))success failure:(MIAPIFailureCallback)failure
+{
   [self fetchPath:self.index
         arguments:nil
            method:@"GET"
@@ -146,6 +233,61 @@
           failure:failure];
 }
 
+- (void)getAccessToken:(void (^)(void))success failure:(MIAPIFailureCallback)failure
+{
+  if (!self.clientKey || !self.secretKey)
+  {
+    failure([self errorForCode:MIAPIErrorUnauthorized]);
+    return;
+  }
+  
+  [_requestManager POST:[NSString stringWithFormat:@"%@/token", self.host]
+             parameters:@{
+                          @"grant_type": @"client_credentials",
+                          @"client_id": self.clientKey,
+                          @"client_secret": self.secretKey
+                          }
+                success:^(AFHTTPRequestOperation *operation, id responseObject) {
+                  if ([responseObject isKindOfClass:[NSDictionary class]])
+                  {
+                    id token = responseObject[@"access_token"];
+                    id expires = responseObject[@"expires_in"];
+                    
+                    if ([token isKindOfClass:[NSString class]] && [expires isKindOfClass:[NSNumber class]])
+                    {
+                      NSDate *expiryDate = [NSDate dateWithTimeIntervalSince1970:[((NSNumber *)expires) longLongValue] / MSEC_PER_SEC];
+                      
+                      if ([expiryDate timeIntervalSinceNow] > 0)
+                      {
+                        _accessToken = token;
+                        _accessTokenExpiry = expiryDate;
+                        [_requestManager.requestSerializer setValue:[NSString stringWithFormat:@"Bearer %@", _accessToken] forHTTPHeaderField:@"Authorization"];
+                      }
+                    }
+                    
+                    if ([self parseManifest:responseObject[@"manifest"]])
+                    {
+                      [self storeAccessTokenAndManifest];
+                      
+                      self.ready = YES;
+                      if (success)
+                        success();
+                      return;
+                    }
+                  }
+                  
+                  if (failure)
+                    failure([self errorForCode:MIAPIErrorManifest]);
+                }
+                failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+                  MIAPIErrorCode code = error.code == 401 ? MIAPIErrorUnauthorized : MIAPIErrorInternal;
+                  if (failure)
+                    failure([self errorForCode:code]);
+                }];
+}
+
+#pragma mark - API fetching
+
 - (NSString *)fetchPath:(NSString *)path
               arguments:(NSDictionary *)args
                  method:(NSString *)method
@@ -167,7 +309,7 @@
     if (!self.loggingEnabled)
       return;
     
-    NSLog(@"%@ (%ld): %dms", url, (long)operation.response.statusCode, (int)(1000 * [[NSDate date] timeIntervalSinceDate:timingDate]));
+    NSLog(@"%@ (%ld): %dms", url, (long)operation.response.statusCode, (int)(MSEC_PER_SEC * [[NSDate date] timeIntervalSinceDate:timingDate]));
   };
   
   void(^removeRequest)() = ^
@@ -195,7 +337,19 @@
   {
     logTime(operation);
     removeRequest();
-    failure(error);
+    
+    if (error.code == 401)
+    {
+      [self getAccessToken:^{
+        [self fetchPath:path arguments:args method:method success:success failure:failure];
+      } failure:^(NSError *error) {
+        failure(error);
+      }];
+    }
+    else
+    {
+      failure(error);
+    }
   };
   
   AFHTTPRequestOperation *request;
