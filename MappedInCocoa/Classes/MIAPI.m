@@ -340,15 +340,21 @@
     
     if (error.code == 401)
     {
+      // 401 Unauthorized - get new token and retry call
       [self getAccessToken:^{
         [self fetchPath:path arguments:args method:method success:success failure:failure];
       } failure:^(NSError *error) {
-        failure(error);
+        failure([self errorForCode:MIAPIErrorInternal]);
       }];
+    }
+    else if (error.code == 403)
+    {
+      // 403 Forbidden - client is not authorized for call
+      failure([self errorForCode:MIAPIErrorForbidden]);
     }
     else
     {
-      failure(error);
+      failure([self errorForCode:MIAPIErrorInternal]);
     }
   };
   
