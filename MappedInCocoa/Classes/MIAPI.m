@@ -280,7 +280,7 @@
                     failure([self errorForCode:MIAPIErrorManifest]);
                 }
                 failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-                  MIAPIErrorCode code = error.code == 401 ? MIAPIErrorUnauthorized : error.code == 403 ? MIAPIErrorForbidden : MIAPIErrorInternal;
+                  MIAPIErrorCode code = error.code == 401 ? MIAPIErrorUnauthorized : MIAPIErrorInternal;
                   if (failure)
                     failure([self errorForCode:code]);
                 }];
