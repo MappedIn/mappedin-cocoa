@@ -280,7 +280,7 @@
                     failure([self errorForCode:MIAPIErrorManifest]);
                 }
                 failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-                  MIAPIErrorCode code = error.code == 401 ? MIAPIErrorUnauthorized : MIAPIErrorInternal;
+                  MIAPIErrorCode code = operation.response.statusCode == 401 ? MIAPIErrorUnauthorized : MIAPIErrorInternal;
                   if (failure)
                     failure([self errorForCode:code]);
                 }];
@@ -338,7 +338,7 @@
     logTime(operation);
     removeRequest();
     
-    if (error.code == 401)
+    if (operation.response.statusCode == 401)
     {
       // 401 Unauthorized - get new token and retry call
       [self getAccessToken:^{
@@ -347,7 +347,7 @@
         failure([self errorForCode:MIAPIErrorInternal]);
       }];
     }
-    else if (error.code == 403)
+    else if (operation.response.statusCode == 403)
     {
       // 403 Forbidden - client is not authorized for call
       failure([self errorForCode:MIAPIErrorForbidden]);
