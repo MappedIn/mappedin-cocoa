@@ -124,6 +124,13 @@
   XCTAssertTrue(hasCalledBack, @"should have called back after connecting");
 }
 
+- (void)testNoLanguage
+{
+  self.api.language = nil;
+  
+  [self testSimpleCall];
+}
+
 - (void)testPreferredLanguage
 {
   NSString *languageString = [NSLocale preferredLanguages][0];

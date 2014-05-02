@@ -57,6 +57,8 @@
   self.clientKey = clientKey;
   self.secretKey = secretKey;
   
+  [self usePreferredLanguage];
+  
   return self;
 }
 
