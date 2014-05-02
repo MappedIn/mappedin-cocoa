@@ -124,4 +124,13 @@
   XCTAssertTrue(hasCalledBack, @"should have called back after connecting");
 }
 
+- (void)testPreferredLanguage
+{
+  NSString *languageString = [NSLocale preferredLanguages][0];
+  
+  [self.api usePreferredLanguage];
+  
+  XCTAssertEqualObjects(languageString, self.api.language, @"API language should be the first of +[NSLocale preferredLanguages]");
+}
+
 @end

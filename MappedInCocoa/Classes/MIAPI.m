@@ -300,6 +300,12 @@
 {
   NSDate *timingDate = [NSDate date];
   
+  NSMutableDictionary *argsWithLanguage = [NSMutableDictionary dictionary];
+  if (self.language)
+    argsWithLanguage[@"lang"] = self.language;
+  
+  [argsWithLanguage addEntriesFromDictionary:args];
+  
   if (self.version.length)
   {
     path = [NSString stringWithFormat:@"/%@%@", self.version, path];
@@ -346,7 +352,7 @@
     {
       // 401 Unauthorized - get new token and retry call
       [self getAccessToken:^{
-        [self fetchPath:path arguments:args method:method success:success failure:failure];
+        [self fetchPath:path arguments:argsWithLanguage method:method success:success failure:failure];
       } failure:^(NSError *error) {
         failure([self errorForCode:MIAPIErrorInternal]);
       }];
@@ -366,11 +372,11 @@
   
   if ([method isEqualToString:@"GET"])
   {
-    request = [_requestManager GET:url parameters:args success:requestSuccess failure:requestFailure];
+    request = [_requestManager GET:url parameters:argsWithLanguage success:requestSuccess failure:requestFailure];
   }
   else if ([method isEqualToString:@"POST"])
   {
-    request = [_requestManager POST:url parameters:args success:requestSuccess failure:requestFailure];
+    request = [_requestManager POST:url parameters:argsWithLanguage success:requestSuccess failure:requestFailure];
   }
   
   if (!request)
@@ -431,6 +437,13 @@
   AFHTTPRequestOperation *request = _requestOperations[requestID];
   [request cancel];
   [_requestOperations removeObjectForKey:requestID];
+}
+
+#pragma mark - Language
+
+- (void)usePreferredLanguage
+{
+  self.language = [NSLocale preferredLanguages][0];
 }
 
 @end
