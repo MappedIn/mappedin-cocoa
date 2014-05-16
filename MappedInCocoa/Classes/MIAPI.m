@@ -9,6 +9,7 @@
 #import "MIAPI.h"
 #import "MIMethod.h"
 #import <AFHTTPRequestOperationManager.h>
+#import <AFNetworkReachabilityManager.h>
 
 #define MSEC_PER_SEC 1000.0
 
@@ -18,10 +19,12 @@
 
 @interface MIAPI ()
 {
+  AFNetworkReachabilityManager *_reachabilityManager;
   AFHTTPRequestOperationManager *_requestManager;
   NSMutableDictionary *_methodManifest;
   NSMutableDictionary *_requestOperations;
   BOOL _initializing;
+  BOOL _awaitingNetworkReachability;
   
   NSString *_accessToken;
   NSDate *_accessTokenExpiry;
@@ -44,11 +47,14 @@
 {
   self = [super init];
   
+  NSString *domain = @"api.mappedin.com";
+  
+  _reachabilityManager = [AFNetworkReachabilityManager managerForDomain:domain];
   _requestManager = [AFHTTPRequestOperationManager manager];
   _methodManifest = [NSMutableDictionary dictionary];
   _requestOperations = [NSMutableDictionary dictionary];
   
-  self.host = @"https://api.mappedin.com";
+  self.host = [NSString stringWithFormat:@"https://%@", domain];
   self.index = @"/manifest";
   self.port = @"443";
   self.version = version;
@@ -102,6 +108,10 @@
   else if (code == MIAPIErrorForbidden)
   {
     description = @"Not authorized to access method.";
+  }
+  else if (code == MIAPIErrorNetworkNotReachable)
+  {
+    description = @"Unable to access internet.";
   }
   
   NSMutableDictionary *userInfo = info ? [NSMutableDictionary dictionaryWithDictionary:info] : [NSMutableDictionary dictionary];
@@ -194,6 +204,26 @@
   {
     if (failure)
       failure([self errorForCode:MIAPIErrorAlreadyInitializing]);
+    return;
+  }
+  
+  if (_reachabilityManager.networkReachabilityStatus == AFNetworkReachabilityStatusUnknown)
+  {
+    __weak MIAPI *weakSelf = self;
+    __weak AFNetworkReachabilityManager *weakReachabilityManager = _reachabilityManager;
+    
+    [_reachabilityManager startMonitoring];
+    [_reachabilityManager setReachabilityStatusChangeBlock:^(AFNetworkReachabilityStatus status) {
+      [weakSelf connectWithCallback:success failure:failure];
+      [weakReachabilityManager setReachabilityStatusChangeBlock:NULL];
+    }];
+    return;
+  }
+  
+  if (!_reachabilityManager.isReachable)
+  {
+    if (failure)
+      failure([self errorForCode:MIAPIErrorNetworkNotReachable]);
     return;
   }
   
@@ -372,6 +402,13 @@
         failure([self errorForCode:MIAPIErrorInternal]);
     }
   };
+  
+  if (!_reachabilityManager.isReachable)
+  {
+    if (failure)
+      failure([self errorForCode:MIAPIErrorNetworkNotReachable]);
+    return nil;
+  }
   
   AFHTTPRequestOperation *request;
   

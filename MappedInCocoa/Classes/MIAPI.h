@@ -21,7 +21,8 @@ typedef NS_ENUM(NSInteger, MIAPIErrorCode)
   MIAPIErrorMethodName,
   MIAPIErrorInternal,
   MIAPIErrorUnauthorized,
-  MIAPIErrorForbidden
+  MIAPIErrorForbidden,
+  MIAPIErrorNetworkNotReachable
 };
 
 @interface MIAPI : NSObject
