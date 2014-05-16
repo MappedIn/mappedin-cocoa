@@ -192,21 +192,6 @@
 
 - (void)connectWithCallback:(void (^)(void))success failure:(MIAPIFailureCallback)failure
 {
-  if (self.ready || [self retrieveAccessTokenAndManifest])
-  {
-    self.ready = YES;
-    if (success)
-      success();
-    return;
-  }
-  
-  if (_initializing)
-  {
-    if (failure)
-      failure([self errorForCode:MIAPIErrorAlreadyInitializing]);
-    return;
-  }
-  
   if (_reachabilityManager.networkReachabilityStatus == AFNetworkReachabilityStatusUnknown)
   {
     __weak MIAPI *weakSelf = self;
@@ -224,6 +209,21 @@
   {
     if (failure)
       failure([self errorForCode:MIAPIErrorNetworkNotReachable]);
+    return;
+  }
+  
+  if (self.ready || [self retrieveAccessTokenAndManifest])
+  {
+    self.ready = YES;
+    if (success)
+      success();
+    return;
+  }
+  
+  if (_initializing)
+  {
+    if (failure)
+      failure([self errorForCode:MIAPIErrorAlreadyInitializing]);
     return;
   }
   
