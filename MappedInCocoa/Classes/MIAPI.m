@@ -356,17 +356,20 @@
       [self getAccessToken:^{
         [self fetchPath:path arguments:argsWithLanguage method:method success:success failure:failure];
       } failure:^(NSError *error) {
-        failure([self errorForCode:MIAPIErrorInternal]);
+        if (failure)
+          failure([self errorForCode:MIAPIErrorInternal]);
       }];
     }
     else if (operation.response.statusCode == 403)
     {
       // 403 Forbidden - client is not authorized for call
-      failure([self errorForCode:MIAPIErrorForbidden]);
+      if (failure)
+        failure([self errorForCode:MIAPIErrorForbidden]);
     }
     else
     {
-      failure([self errorForCode:MIAPIErrorInternal]);
+      if (failure)
+        failure([self errorForCode:MIAPIErrorInternal]);
     }
   };
   
@@ -398,7 +401,8 @@
   MIMethod *method = _methodManifest[name];
   if (!method)
   {
-    failure([self errorForCode:MIAPIErrorMethodName userInfo:@{@"MIAPIErrorName": name}]);
+    if (failure)
+      failure([self errorForCode:MIAPIErrorMethodName userInfo:@{@"MIAPIErrorName": name}]);
     return nil;
   }
   
