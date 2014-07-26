@@ -279,6 +279,7 @@
                           @"client_secret": self.secretKey
                           }
                 success:^(AFHTTPRequestOperation *operation, id responseObject) {
+                  _initializing = NO;
                   if ([responseObject isKindOfClass:[NSDictionary class]])
                   {
                     id token = responseObject[@"access_token"];
@@ -309,6 +310,7 @@
                     failure([self errorForCode:MIAPIErrorManifest]);
                 }
                 failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+                  _initializing = NO;
                   MIAPIErrorCode code = operation.response.statusCode == 401 ? MIAPIErrorUnauthorized : MIAPIErrorInternal;
                   if (failure)
                     failure([self errorForCode:code]);
