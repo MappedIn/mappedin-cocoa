@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		372593191984633100E9962F /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = 372593161984633100E9962F /* LICENSE */; };
+		3725931A1984633100E9962F /* mappedin-cocoa.podspec in Resources */ = {isa = PBXBuildFile; fileRef = 372593171984633100E9962F /* mappedin-cocoa.podspec */; };
+		3725931B1984633100E9962F /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 372593181984633100E9962F /* README.md */; };
 		37AD38721811C9430035B916 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 37AD38711811C9430035B916 /* Foundation.framework */; };
 		37AD38741811C9440035B916 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 37AD38731811C9440035B916 /* CoreGraphics.framework */; };
 		37AD38761811C9440035B916 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 37AD38751811C9440035B916 /* UIKit.framework */; };
@@ -35,6 +38,9 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		372593161984633100E9962F /* LICENSE */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		372593171984633100E9962F /* mappedin-cocoa.podspec */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "mappedin-cocoa.podspec"; sourceTree = "<group>"; };
+		372593181984633100E9962F /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README.md; sourceTree = "<group>"; };
 		37AD386E1811C9430035B916 /* MappedInCocoa.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MappedInCocoa.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		37AD38711811C9430035B916 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		37AD38731811C9440035B916 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
@@ -84,9 +90,20 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		372593151984631A00E9962F /* Pod Metadata */ = {
+			isa = PBXGroup;
+			children = (
+				372593161984633100E9962F /* LICENSE */,
+				372593171984633100E9962F /* mappedin-cocoa.podspec */,
+				372593181984633100E9962F /* README.md */,
+			);
+			name = "Pod Metadata";
+			sourceTree = "<group>";
+		};
 		37AD38651811C9430035B916 = {
 			isa = PBXGroup;
 			children = (
+				372593151984631A00E9962F /* Pod Metadata */,
 				37AD38771811C9440035B916 /* MappedInCocoa */,
 				37AD38901811C9440035B916 /* MappedInCocoaTests */,
 				37AD38701811C9430035B916 /* Frameworks */,
@@ -246,7 +263,10 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				372593191984633100E9962F /* LICENSE in Resources */,
 				37AD387C1811C9440035B916 /* InfoPlist.strings in Resources */,
+				3725931B1984633100E9962F /* README.md in Resources */,
+				3725931A1984633100E9962F /* mappedin-cocoa.podspec in Resources */,
 				37AD38841811C9440035B916 /* Images.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
