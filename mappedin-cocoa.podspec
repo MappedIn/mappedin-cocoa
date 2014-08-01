@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
 
   s.name         = "mappedin-cocoa"
-  s.version      = "0.6.1"
+  s.version      = "0.7.0"
   s.summary      = "Cocoa bindings for the MappedIn API"
 
   s.homepage     = "https://github.com/MappedIn/mappedin-cocoa"
@@ -18,6 +18,6 @@ Pod::Spec.new do |s|
 
   s.requires_arc = true
 
-  s.dependency   'AFNetworking', '~> 2.0'
+  s.dependency   'AFNetworking', '~> 1.0'
 
 end
