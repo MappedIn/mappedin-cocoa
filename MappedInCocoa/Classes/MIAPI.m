@@ -434,6 +434,9 @@
     logTime(operation);
     removeRequest();
     
+    if (operation.isCancelled)
+      return;
+    
     if (operation.response.statusCode == 401)
     {
       // 401 Unauthorized - get new token and retry call
