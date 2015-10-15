@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
 
-  s.name         = "mappedin-cocoa"
+  s.name         = "MappedInCocoa"
   s.version      = "0.8.1"
   s.summary      = "Cocoa bindings for the MappedIn API"
 
