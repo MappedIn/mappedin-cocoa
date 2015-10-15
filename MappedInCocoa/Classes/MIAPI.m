@@ -8,8 +8,8 @@
 
 #import "MIAPI.h"
 #import "MIMethod.h"
-
-#import <AFNetworking.h>
+#import <AFHTTPRequestOperationManager.h>
+#import <AFNetworkReachabilityManager.h>
 
 #define MSEC_PER_SEC 1000.0
 
@@ -17,63 +17,10 @@
 #define StoredAccessTokenKey @"MappedInCocoaAccessToken"
 #define StoredTokenExpiryKey @"MappedInCocoaTokenExpiry"
 
-@interface AFHTTPClient (Version2Compatibility)
-
-@property (nonatomic, readonly) BOOL isReachable;
-
-- (AFHTTPRequestOperation *)POST:(NSString *)path parameters:(NSDictionary *)parameters success:(void (^)(AFHTTPRequestOperation *, id))success failure:(void (^)(AFHTTPRequestOperation *, NSError *))failure;
-- (AFHTTPRequestOperation *)GET:(NSString *)path parameters:(NSDictionary *)parameters success:(void (^)(AFHTTPRequestOperation *, id))success failure:(void (^)(AFHTTPRequestOperation *, NSError *))failure;
-
-@end
-
-@implementation AFHTTPClient (Version2Compatibility)
-
-- (BOOL)isReachable
-{
-  return (self.networkReachabilityStatus == AFNetworkReachabilityStatusReachableViaWWAN || self.networkReachabilityStatus == AFNetworkReachabilityStatusReachableViaWiFi);
-}
-
-- (AFHTTPRequestOperation *)enqueueRequestOperationWithMethod:(NSString *)method
-                                                         path:(NSString *)path
-                                                   parameters:(NSDictionary *)parameters
-                                                      success:(void (^)(AFHTTPRequestOperation *, id))success
-                                                      failure:(void (^)(AFHTTPRequestOperation *, NSError *))failure
-{
-  NSURLRequest *request = [self requestWithMethod:method path:path parameters:parameters];
-  AFHTTPRequestOperation *operation = [self HTTPRequestOperationWithRequest:request success:success failure:failure];
-  [self enqueueHTTPRequestOperation:operation];
-  return operation;
-}
-
-- (AFHTTPRequestOperation *)POST:(NSString *)path parameters:(NSDictionary *)parameters success:(void (^)(AFHTTPRequestOperation *, id))success failure:(void (^)(AFHTTPRequestOperation *, NSError *))failure
-{
-  return [self enqueueRequestOperationWithMethod:@"POST" path:path parameters:parameters success:success failure:failure];
-}
-
-- (AFHTTPRequestOperation *)GET:(NSString *)path parameters:(NSDictionary *)parameters success:(void (^)(AFHTTPRequestOperation *, id))success failure:(void (^)(AFHTTPRequestOperation *, NSError *))failure
-{
-  return [self enqueueRequestOperationWithMethod:@"GET" path:path parameters:parameters success:success failure:failure];
-}
-
-@end
-
-@interface EasyJSONRequestOperation : AFJSONRequestOperation
-
-@end
-
-@implementation EasyJSONRequestOperation
-
-+ (BOOL)canProcessRequest:(NSURLRequest *)urlRequest
-{
-  return YES;
-}
-
-@end
-
-
 @interface MIAPI ()
 {
-  AFHTTPClient *_httpClient;
+  AFNetworkReachabilityManager *_reachabilityManager;
+  AFHTTPRequestOperationManager *_requestManager;
   NSMutableDictionary *_methodManifest;
   NSMutableDictionary *_requestOperations;
   BOOL _initializing;
@@ -102,16 +49,16 @@
   
   NSString *domain = @"api.mappedin.com";
   
+  _reachabilityManager = [AFNetworkReachabilityManager managerForDomain:domain];
+  _requestManager = [AFHTTPRequestOperationManager manager];
+  _methodManifest = [NSMutableDictionary dictionary];
+  _requestOperations = [NSMutableDictionary dictionary];
+  
   self.host = [NSString stringWithFormat:@"https://%@", domain];
   self.index = @"/manifest";
   self.port = @"443";
   self.version = version;
   self.identifier = [[[UIDevice currentDevice] identifierForVendor] UUIDString];
-  
-  _httpClient = [[AFHTTPClient alloc] initWithBaseURL:[NSURL URLWithString:self.host]];
-  [_httpClient registerHTTPOperationClass:[EasyJSONRequestOperation class]];
-  _methodManifest = [NSMutableDictionary dictionary];
-  _requestOperations = [NSMutableDictionary dictionary];
   
   self.clientKey = clientKey;
   self.secretKey = secretKey;
@@ -245,19 +192,20 @@
 
 - (void)connectWithCallback:(void (^)(void))success failure:(MIAPIFailureCallback)failure
 {
-  if (_httpClient.networkReachabilityStatus == AFNetworkReachabilityStatusUnknown)
+  if (_reachabilityManager.networkReachabilityStatus == AFNetworkReachabilityStatusUnknown)
   {
     __weak MIAPI *weakSelf = self;
-    __weak AFHTTPClient *weakHTTPClient = _httpClient;
-
-    [_httpClient setReachabilityStatusChangeBlock:^(AFNetworkReachabilityStatus status) {
+    __weak AFNetworkReachabilityManager *weakReachabilityManager = _reachabilityManager;
+    
+    [_reachabilityManager startMonitoring];
+    [_reachabilityManager setReachabilityStatusChangeBlock:^(AFNetworkReachabilityStatus status) {
       [weakSelf connectWithCallback:success failure:failure];
-      [weakHTTPClient setReachabilityStatusChangeBlock:NULL];
+      [weakReachabilityManager setReachabilityStatusChangeBlock:NULL];
     }];
     return;
   }
   
-  if (!_httpClient.isReachable)
+  if (!_reachabilityManager.isReachable)
   {
     if (failure)
       failure([self errorForCode:MIAPIErrorNetworkNotReachable]);
@@ -324,7 +272,7 @@
     return;
   }
   
-  [_httpClient POST:[NSString stringWithFormat:@"%@/token", self.host]
+  [_requestManager POST:[NSString stringWithFormat:@"%@/token", self.host]
              parameters:@{
                           @"grant_type": @"client_credentials",
                           @"client_id": self.clientKey,
@@ -373,7 +321,7 @@
 {
   _accessToken = token;
   _accessTokenExpiry = expiryDate;
-  [_httpClient setDefaultHeader:@"Authorization" value:[NSString stringWithFormat:@"Bearer %@", _accessToken]];
+  [_requestManager.requestSerializer setValue:[NSString stringWithFormat:@"Bearer %@", _accessToken] forHTTPHeaderField:@"Authorization"];
 }
 
 #pragma mark - API fetching
@@ -460,7 +408,7 @@
     }
   };
   
-  if (!_httpClient.isReachable)
+  if (!_reachabilityManager.isReachable)
   {
     if (failure)
       failure([self errorForCode:MIAPIErrorNetworkNotReachable]);
@@ -471,11 +419,11 @@
   
   if ([method isEqualToString:@"GET"])
   {
-    request = [_httpClient GET:url parameters:argsWithLanguage success:requestSuccess failure:requestFailure];
+    request = [_requestManager GET:url parameters:argsWithLanguage success:requestSuccess failure:requestFailure];
   }
   else if ([method isEqualToString:@"POST"])
   {
-    request = [_httpClient POST:url parameters:argsWithLanguage success:requestSuccess failure:requestFailure];
+    request = [_requestManager POST:url parameters:argsWithLanguage success:requestSuccess failure:requestFailure];
   }
   
   if (!request)

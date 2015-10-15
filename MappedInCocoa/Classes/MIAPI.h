@@ -8,6 +8,8 @@
 
 #import <Foundation/Foundation.h>
 
+@class AFHTTPRequestOperationManager;
+
 typedef void (^MIAPIFailureCallback)(NSError *error);
 typedef void (^MIAPISuccessCallback)(id result);
 
